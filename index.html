@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ModeViz</title>
+<link rel="stylesheet" href="static/css/style.css" />
+</head>
+<body>
+
+<header class="app-header">
+  <h1>ModeViz</h1>
+  <div id="dropzone" class="dropzone">
+    <span>Open or drop an ORCA / Gaussian output file</span>
+    <input type="file" id="file-input" accept=".out,.log,.txt" hidden />
+  </div>
+  <div id="file-meta" class="file-meta"></div>
+</header>
+
+<div id="empty-state" class="empty-state">
+  No file loaded yet. Drop an ORCA or Gaussian output file (frequency
+  calculation) onto the field above, or click it to browse.
+</div>
+
+<main id="app-main" class="app-main">
+
+  <section class="panel viewer-panel" id="viewer-panel">
+    <div class="panel-toolbar">
+      <button id="reset-view" class="btn-small">Reset view</button>
+      <button id="clear-selection" class="btn-small" style="display:none;">Clear selection</button>
+      <div id="selection-chips" class="chips"></div>
+    </div>
+    <div class="panel-toolbar" id="vibration-row">
+      <label class="switch" title="Auto-animate on mode selection">
+        <input type="checkbox" id="auto-animate-toggle" checked />
+        <span class="switch-slider"></span>
+      </label>
+      <span class="filter-label">Auto-animate</span>
+      <label class="filter-label" for="vib-amplitude">Amplitude</label>
+      <input type="range" id="vib-amplitude" min="0.1" max="4" step="0.1" value="0.5" disabled />
+      <span id="vib-amplitude-label" class="filter-label">0.5×</span>
+    </div>
+    <div id="viewer-3d" class="viewer-3d"></div>
+
+    <div class="atom-list-panel" id="atom-list-panel">
+      <div class="atom-list-header">
+        <span class="atom-list-title">Atoms</span>
+        <input type="text" id="atom-search" placeholder="Search element or index…" autocomplete="off" />
+        <label class="switch" title="Start atom numbering at 1 (C1) instead of 0 (C0)">
+          <input type="checkbox" id="one-based-toggle" checked />
+          <span class="switch-slider"></span>
+        </label>
+        <span class="filter-label">1-based</span>
+      </div>
+      <div class="atom-list-wrap">
+        <table class="atom-list-table">
+          <thead>
+            <tr><th>#</th><th>El.</th><th>x</th><th>y</th><th>z</th></tr>
+          </thead>
+          <tbody id="atom-list-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel table-panel">
+    <div class="panel-toolbar">
+      <label class="filter-label" for="contrib-threshold">Highlight threshold</label>
+      <input type="range" id="contrib-threshold" min="0" max="50" step="1" value="10" />
+      <span id="contrib-threshold-label" class="filter-label">10%</span>
+    </div>
+    <div class="table-scroll">
+      <table class="mode-table">
+        <thead id="mode-table-head"></thead>
+        <tbody id="mode-table-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel spectrum-panel">
+    <div class="panel-toolbar">
+      <span class="panel-title">IR spectrum</span>
+    </div>
+    <div id="spectrum" class="spectrum"></div>
+  </section>
+
+</main>
+
+<script src="static/vendor/3dmol.min.js"></script>
+<script src="static/vendor/plotly-2.35.2.min.js"></script>
+<script src="static/js/parser.js"></script>
+<script src="static/js/chem.js"></script>
+<script src="static/js/viewer.js"></script>
+<script src="static/js/app.js"></script>
+</body>
+</html>

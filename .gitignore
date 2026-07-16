@@ -1,0 +1,6 @@
+.DS_Store
+testdata
+examples
+*.zip
+*.out
+*.log
