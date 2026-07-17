@@ -41,11 +41,32 @@ window.MODEVIEWER_ELEMENTS = (() => {
     Mg: "#8aff00", Al: "#bfa6a6", Si: "#f0c8a0", default: "#ff69b4"
   };
 
+  // Standard CPK colors are tuned for a light/white viewer background.
+  // A few of them (carbon above all — it's usually the most common
+  // element on screen) are dark grays that nearly disappear against the
+  // dark --viewer-bg (#232b33). Only the offenders get a lighter
+  // dark-mode variant; everything else keeps its normal CPK color since
+  // it already reads fine on a dark background.
+  const elementColorsDark = {
+    C: "#9a9a9a"
+  };
+
+  function prefersDarkMode() {
+    return (
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    );
+  }
+
   function getCovRadius(element) {
     return covRadii[element] || 1.5;
   }
 
   function getColor(element) {
+    if (prefersDarkMode() && elementColorsDark[element]) {
+      return elementColorsDark[element];
+    }
     return elementColors[element] || elementColors.default;
   }
 

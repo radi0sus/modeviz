@@ -138,6 +138,18 @@
         Plotly.Plots.resize(el.spectrumEl);
       }
     });
+
+    // CSS custom properties already update live with the OS light/dark
+    // switch (that's just the prefers-color-scheme media query), but two
+    // things were baked in at render time and don't follow along on
+    // their own: the 3Dmol canvas's background color (set once, in
+    // Viewer.init()) and the Plotly layout colors (computed once per
+    // renderSpectrum() call). Re-push both whenever the preference flips.
+    const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    darkModeQuery.addEventListener("change", () => {
+      if (viewerInitialized) Viewer.updateBackgroundColor();
+      renderAll();
+    });
   }
 
   function loadFile(file) {
@@ -531,18 +543,47 @@
       showlegend: false
     };
 
+    const css = getComputedStyle(document.documentElement);
+    const textColor = css.getPropertyValue("--text").trim();
+    const mutedColor = css.getPropertyValue("--muted").trim();
+    const borderColor = css.getPropertyValue("--border").trim();
+    const panelColor = css.getPropertyValue("--panel").trim();
+    const accentColor = css.getPropertyValue("--accent").trim();
+
     const layout = {
-      margin: { l: 55, r: 20, t: 10, b: 45 },
+      margin: { l: 55, r: 20, t: 10, b: 55 },
       autosize: true,
       xaxis: {
-        title: { text: "Wavenumber / cm\u207b\u00b9", standoff: 8 },
-        autorange: "reversed"
+        title: { text: "Wavenumber / cm\u207b\u00b9", standoff: 14 },
+        autorange: "reversed",
+        gridcolor: borderColor,
+        zerolinecolor: borderColor,
+        linecolor: borderColor,
+        tickcolor: borderColor,
+        tickfont: { color: mutedColor }
       },
-      yaxis: { title: "Intensity" },
+      yaxis: {
+        title: "Intensity",
+        gridcolor: borderColor,
+        zerolinecolor: borderColor,
+        linecolor: borderColor,
+        tickcolor: borderColor,
+        tickfont: { color: mutedColor }
+      },
       showlegend: false,
       paper_bgcolor: "transparent",
       plot_bgcolor: "transparent",
-      font: { color: getComputedStyle(document.documentElement).getPropertyValue("--text") }
+      font: { color: textColor },
+      hoverlabel: {
+        bgcolor: panelColor,
+        bordercolor: borderColor,
+        font: { color: textColor }
+      },
+      modebar: {
+        bgcolor: "transparent",
+        color: mutedColor,
+        activecolor: accentColor
+      }
     };
 
     const config = {

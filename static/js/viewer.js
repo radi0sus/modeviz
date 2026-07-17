@@ -74,6 +74,20 @@ window.MODEVIEWER_VIEWER = (() => {
     viewer.render();
   }
 
+  // Called when the OS light/dark preference flips. 3Dmol's background
+  // was only ever set once, at createViewer() time in init(); the CSS
+  // variable itself updates live via the prefers-color-scheme media
+  // query, but the already-rendered WebGL canvas does not follow it
+  // automatically, so it has to be pushed through explicitly.
+  function updateBackgroundColor() {
+    if (!viewer) return;
+    const css = getComputedStyle(document.documentElement);
+    let bg = css.getPropertyValue("--viewer-bg").trim() || "#1a1a1a";
+    if (bg.startsWith("#")) bg = "0x" + bg.slice(1);
+    viewer.setBackgroundColor(bg);
+    viewer.render();
+  }
+
   /*
     contributions: Map<atomIndex, fraction> (0..1) for the currently
     selected mode, or null to just show plain element colors.
@@ -347,6 +361,7 @@ window.MODEVIEWER_VIEWER = (() => {
 
   return {
     init, load, render, resize, resetView, setAtomClickCallback,
-    startVibration, stopVibration, isVibrating, setBondTolerance
+    startVibration, stopVibration, isVibrating, setBondTolerance,
+    updateBackgroundColor
   };
 })();
