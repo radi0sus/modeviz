@@ -24,6 +24,7 @@ window.MODEVIEWER_VIEWER = (() => {
   let model = null;
   let atoms = [];
   let bonds = [];
+  let bondTolerancePct = 8;
   let hasZoomed = false;
   let onAtomClick = null;
   let vibrating = false;
@@ -51,9 +52,20 @@ window.MODEVIEWER_VIEWER = (() => {
 
   function load(geometryAtoms) {
     atoms = geometryAtoms || [];
-    bonds = Elements.findBonds(atoms, 8);
+    bonds = Elements.findBonds(atoms, bondTolerancePct);
     hasZoomed = false;
     render({});
+  }
+
+  // Called from the "Bond radius" slider. Recomputes connectivity at the
+  // new tolerance; does NOT re-render by itself, so the caller can pass
+  // through its own current contributions/selection state (see app.js
+  // render3D(), same pattern as the contribution-threshold slider).
+  function setBondTolerance(pct) {
+    bondTolerancePct = pct;
+    if (atoms.length > 0) {
+      bonds = Elements.findBonds(atoms, bondTolerancePct);
+    }
   }
 
   function resize() {
@@ -95,6 +107,30 @@ window.MODEVIEWER_VIEWER = (() => {
     }
 
     model = viewer.addModel(xyzLines.join("\n"), "xyz");
+
+    // 3Dmol auto-perceives bonds on addModel using its own covalent-radius
+    // table/tolerance, which does not match Elements.findBonds() (chem.js).
+    // That mismatch is invisible in the static view (bonds are drawn
+    // manually below, ignoring the model's own connectivity), but becomes
+    // visible during vibration, where startVibration() switches to
+    // 3Dmol's native "stick" style — which reads bonds directly off the
+    // model. Overwriting the model's connectivity here with our own bonds
+    // keeps both rendering paths consistent (e.g. avoids a borderline-
+    // distance Cu–N nitrile "bond" appearing only while animating).
+    const modelAtomsForBonds = model.selectedAtoms({});
+    modelAtomsForBonds.forEach((a) => {
+      a.bonds = [];
+      a.bondOrder = [];
+    });
+    for (const bond of bonds) {
+      const ai = modelAtomsForBonds[bond.i];
+      const aj = modelAtomsForBonds[bond.j];
+      if (!ai || !aj) continue;
+      ai.bonds.push(bond.j);
+      ai.bondOrder.push(1);
+      aj.bonds.push(bond.i);
+      aj.bondOrder.push(1);
+    }
 
     const elements = [...new Set(visibleAtoms.map((a) => a.element))];
     for (const el of elements) {
@@ -155,13 +191,31 @@ window.MODEVIEWER_VIEWER = (() => {
       const b = atoms[bond.j];
       if (!a || !b) continue;
 
+      const mid = {
+        x: (a.x + b.x) / 2,
+        y: (a.y + b.y) / 2,
+        z: (a.z + b.z) / 2
+      };
+
+      // Two half-cylinders, each colored by its own atom's element —
+      // matches the CPK bicolor convention 3Dmol's native "stick" style
+      // already applies during vibration (see startVibration()), so
+      // bonds no longer look mono-color/gray only in the static view.
       viewer.addCylinder({
         start: { x: a.x, y: a.y, z: a.z },
-        end: { x: b.x, y: b.y, z: b.z },
+        end: mid,
         radius: 0.07,
-        color: "#7a8590",
+        color: Elements.getColor(a.element),
         fromCap: 1,
-        toCap: 1
+        toCap: 0
+      });
+      viewer.addCylinder({
+        start: { x: b.x, y: b.y, z: b.z },
+        end: mid,
+        radius: 0.07,
+        color: Elements.getColor(b.element),
+        fromCap: 1,
+        toCap: 0
       });
     }
 
@@ -181,6 +235,34 @@ window.MODEVIEWER_VIEWER = (() => {
     }
 
     viewer.render();
+    renderLegend(elements);
+  }
+
+  // Sorted alphabetically, except that H and C are pinned to the front
+  // (the common case: organic ligand + a couple of heteroatoms), so the
+  // legend order doesn't jump around unpredictably as elements happen
+  // to appear in the atom list.
+  function renderLegend(elements) {
+    const el = document.getElementById("viewer-legend");
+    if (!el) return;
+
+    const priority = { H: 0, C: 1 };
+    const sorted = [...elements].sort((a, b) => {
+      const pa = priority[a] ?? 2;
+      const pb = priority[b] ?? 2;
+      if (pa !== pb) return pa - pb;
+      return a.localeCompare(b);
+    });
+
+    el.innerHTML = sorted
+      .map(
+        (symbol) => `
+        <div class="viewer-legend-item">
+          <span class="viewer-legend-swatch" style="background:${Elements.getColor(symbol)}"></span>
+          <span>${symbol}</span>
+        </div>`
+      )
+      .join("");
   }
 
   function resetView() {
@@ -232,7 +314,7 @@ window.MODEVIEWER_VIEWER = (() => {
         { elem: el },
         {
           sphere: { radius: 0.24, color: Elements.getColor(el) },
-          stick: { radius: 0.09, color: Elements.getColor(el) }
+          stick: { radius: 0.07, color: Elements.getColor(el) }
         }
       );
     }
@@ -265,6 +347,6 @@ window.MODEVIEWER_VIEWER = (() => {
 
   return {
     init, load, render, resize, resetView, setAtomClickCallback,
-    startVibration, stopVibration, isVibrating
+    startVibration, stopVibration, isVibrating, setBondTolerance
   };
 })();

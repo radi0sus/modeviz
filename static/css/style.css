@@ -218,15 +218,22 @@ button {
   cursor: default;
 }
 
-#vibration-row input[type="range"],
+#viewer-controls-row input[type="range"],
 .table-panel input[type="range"] {
   accent-color: var(--accent);
   width: 120px;
 }
 
-#vibration-row input[type="range"]:disabled,
+#viewer-controls-row input[type="range"]:disabled,
 .table-panel input[type="range"]:disabled {
   opacity: 0.45;
+}
+
+.toolbar-divider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--border);
+  margin: 2px 2px;
 }
 
 #vib-amplitude-label {
@@ -278,6 +285,49 @@ button {
   flex: 1;
   min-height: 220px;
   position: relative;
+}
+
+/* Element-color key, overlaid in the corner of the 3D view. Built
+   dynamically in viewer.js from the elements present in the loaded
+   structure. pointer-events: none so it never intercepts clicks meant
+   for the 3Dmol canvas underneath. */
+.viewer-legend {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 10px;
+  background: var(--panel-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  max-height: calc(100% - 20px);
+  overflow-y: auto;
+}
+
+.viewer-legend:empty {
+  display: none;
+}
+
+.viewer-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.viewer-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  flex-shrink: 0;
 }
 
 /* Atom list under the 3D view — a precise, searchable alternative

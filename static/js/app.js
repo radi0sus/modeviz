@@ -25,8 +25,11 @@
     tableBody: document.getElementById("mode-table-body"),
     tableHead: document.getElementById("mode-table-head"),
     selectionChips: document.getElementById("selection-chips"),
+    selectionRow: document.getElementById("selection-row"),
     clearSelectionBtn: document.getElementById("clear-selection"),
     resetViewBtn: document.getElementById("reset-view"),
+    bondTolerance: document.getElementById("bond-tolerance"),
+    bondToleranceLabel: document.getElementById("bond-tolerance-label"),
     autoAnimateToggle: document.getElementById("auto-animate-toggle"),
     vibAmplitude: document.getElementById("vib-amplitude"),
     vibAmplitudeLabel: document.getElementById("vib-amplitude-label"),
@@ -79,6 +82,17 @@
     });
 
     el.resetViewBtn.addEventListener("click", () => Viewer.resetView());
+
+    el.bondTolerance.addEventListener("input", () => {
+      const pct = parseInt(el.bondTolerance.value, 10);
+      el.bondToleranceLabel.textContent = `${pct}%`;
+      Viewer.setBondTolerance(pct);
+
+      // Same reasoning as contribThreshold: connectivity is baked into
+      // the 3Dmol model once per render(), so a running vibration keeps
+      // using the bonds it started with until the next static render.
+      if (!Viewer.isVibrating()) render3D();
+    });
 
     el.atomSearch.addEventListener("input", () => {
       state.atomSearch = el.atomSearch.value.trim().toLowerCase();
@@ -272,11 +286,11 @@
     el.selectionChips.innerHTML = "";
 
     if (state.selectedAtoms.size === 0) {
-      el.clearSelectionBtn.style.display = "none";
+      el.selectionRow.style.display = "none";
       return;
     }
 
-    el.clearSelectionBtn.style.display = "";
+    el.selectionRow.style.display = "";
 
     let i = 0;
     for (const atomIndex of state.selectedAtoms) {
