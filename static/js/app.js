@@ -187,6 +187,18 @@
 
         Viewer.load(data.geometry);
         renderAll();
+
+        // The viewer panel was "display: none" until a few lines above,
+        // so the container 3Dmol measured when creating its canvas may
+        // not yet be the final, settled grid-layout size (e.g. once the
+        // mode table below has finished populating). If that happens,
+        // 3Dmol's canvas ends up sized for the pre-layout box and gets
+        // CSS-stretched to fit the real one, making the structure look
+        // larger than the panel. A resize on the next settled frame
+        // re-measures the container and fixes the mismatch.
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => Viewer.resize());
+        });
       } catch (err) {
         alert("Error reading file:\n" + err.message);
       }
@@ -224,6 +236,42 @@
     }
 
     updateVibrationControls();
+    scrollTableToSelectedMode();
+  }
+
+  // Brings the selected mode's row into view - mainly for clicks
+  // originating in the spectrum, so the user can see which row lit up
+  // without hunting through the table. Written by hand instead of
+  // relying on scrollIntoView(), because the sticky <thead> visually
+  // covers the top of the scroll container: a row can sit right under
+  // it and still count as "visible" to the browser, so scrollIntoView's
+  // "nearest" would skip scrolling even though the row is hidden.
+  function scrollTableToSelectedMode() {
+    if (state.selectedMode === null) return;
+
+    const tr = el.tableBody.querySelector("tr.selected");
+    if (!tr) return;
+
+    const container = tr.closest(".table-scroll");
+    if (!container) return;
+
+    const headerHeight = el.tableHead ? el.tableHead.getBoundingClientRect().height : 0;
+    const containerRect = container.getBoundingClientRect();
+    const rowRect = tr.getBoundingClientRect();
+
+    const visibleTop = containerRect.top + headerHeight;
+    const visibleBottom = containerRect.bottom;
+
+    let delta = 0;
+    if (rowRect.top < visibleTop) {
+      delta = rowRect.top - visibleTop;
+    } else if (rowRect.bottom > visibleBottom) {
+      delta = rowRect.bottom - visibleBottom;
+    }
+
+    if (delta !== 0) {
+      container.scrollBy({ top: delta, behavior: "smooth" });
+    }
   }
 
   function getSelectedModeRow() {

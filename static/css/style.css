@@ -99,9 +99,10 @@ button {
   font-size: 0.95rem;
 }
 
-/* Main layout: viewer (top-left), mode table (top-right),
-   IR spectrum (full width, bottom) — the spectrum needed much more
-   room than a thin strip squeezed under the 3D view. */
+/* Main layout: viewer spans the full height of the left column,
+   mode table (top-right) and IR spectrum (bottom-right) stacked
+   in the right column. Keeps the 3D view usable on lower-resolution
+   displays where it used to be squeezed into a short top row. */
 .app-main {
   display: none;
   flex: 1;
@@ -109,10 +110,10 @@ button {
   padding: 14px 20px 20px;
   min-height: 0;
   grid-template-columns: minmax(380px, 42%) 1fr;
-  grid-template-rows: minmax(380px, 1fr) minmax(300px, 360px);
+  grid-template-rows: minmax(260px, 1fr) minmax(260px, 1fr);
   grid-template-areas:
-    "viewer  table"
-    "spectrum spectrum";
+    "viewer table"
+    "viewer spectrum";
 }
 
 .panel {
@@ -488,8 +489,7 @@ button {
   border-left: 3px solid var(--accent-2);
 }
 
-/* IR spectrum panel — its own full-width row so the sticks get
-   real horizontal and vertical room instead of a cramped 160px strip. */
+/* IR spectrum panel — sits under the mode table in the right column. */
 .spectrum-panel {
   display: flex;
   flex-direction: column;

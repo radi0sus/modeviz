@@ -244,7 +244,15 @@ window.MODEVIEWER_VIEWER = (() => {
     });
 
     if (!hasZoomed) {
+      // zoomTo() fits the camera to atom *coordinates* only - it has no
+      // idea that spheres/cylinders extend a bit beyond each atom's
+      // center. Without headroom, atoms sitting right at the edge of
+      // the bounding box get their sphere or stick end visibly clipped
+      // by the canvas border. Zooming out a touch afterwards adds a
+      // margin so the whole rendered geometry - not just the atom
+      // centers - fits inside the viewport.
       viewer.zoomTo();
+      viewer.zoom(0.8);
       hasZoomed = true;
     }
 
@@ -282,6 +290,7 @@ window.MODEVIEWER_VIEWER = (() => {
   function resetView() {
     if (!viewer) return;
     viewer.zoomTo();
+    viewer.zoom(0.8);
     viewer.render();
   }
 
