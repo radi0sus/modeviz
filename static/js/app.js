@@ -222,6 +222,45 @@
     state.selectedMode = null;
 
     renderAll();
+    scrollAtomListToAtom(atomIndex);
+  }
+
+  // Brings the atom's row in the atom list into view - mainly for
+  // clicks originating in the 3D viewer, so the user can see which
+  // atom lit up without hunting through the list. Only scrolls when
+  // the atom ended up selected (not on deselect-clicks), and quietly
+  // does nothing if the row isn't currently rendered (e.g. filtered
+  // out by the search box). Same manual scroll approach as
+  // scrollTableToSelectedMode() and for the same reason: the sticky
+  // <thead> can visually cover a row that scrollIntoView would still
+  // consider "visible".
+  function scrollAtomListToAtom(atomIndex) {
+    if (!state.selectedAtoms.has(atomIndex)) return;
+
+    const tr = el.atomListBody.querySelector(`tr[data-atom-index="${atomIndex}"]`);
+    if (!tr) return;
+
+    const container = tr.closest(".atom-list-wrap");
+    if (!container) return;
+
+    const theadEl = container.querySelector("thead");
+    const headerHeight = theadEl ? theadEl.getBoundingClientRect().height : 0;
+    const containerRect = container.getBoundingClientRect();
+    const rowRect = tr.getBoundingClientRect();
+
+    const visibleTop = containerRect.top + headerHeight;
+    const visibleBottom = containerRect.bottom;
+
+    let delta = 0;
+    if (rowRect.top < visibleTop) {
+      delta = rowRect.top - visibleTop;
+    } else if (rowRect.bottom > visibleBottom) {
+      delta = rowRect.bottom - visibleBottom;
+    }
+
+    if (delta !== 0) {
+      container.scrollBy({ top: delta, behavior: "smooth" });
+    }
   }
 
   function selectMode(modeNumber) {
@@ -412,6 +451,7 @@
 
     for (const atom of rows) {
       const tr = document.createElement("tr");
+      tr.dataset.atomIndex = atom.index;
 
       if (state.selectedAtoms.has(atom.index)) tr.classList.add("selected");
 
